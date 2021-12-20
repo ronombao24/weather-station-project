@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ReadingActivity">
+
+  <TableLayout
+      android:id="@+id/readings_table"
+      android:layout_width="313dp"
+      android:layout_height="246dp"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.48">
+
+    <TableRow
+        android:id="@+id/temp_row"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+      <TextView
+          android:id="@+id/temp_read_title"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:fontFamily="sans-serif-black"
+          android:text="@string/temp_title"
+          android:textSize="30sp" />
+
+      <TextView
+          android:id="@+id/temp_read_val"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textSize="24sp" />
+
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/temp_read_row"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+      <TextView
+          android:id="@+id/air_qual_read_title"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:fontFamily="sans-serif-black"
+          android:text="@string/air_quality_title"
+          android:textSize="30sp" />
+
+      <TextView
+          android:id="@+id/air_qual_read_val"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textSize="24sp" />
+
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/air_press_row"
+        android:layout_width="match_parent"
+        android:layout_height="67dp">
+
+      <TextView
+          android:id="@+id/air_press_read_title"
+          android:layout_width="wrap_content"
+          android:layout_height="53dp"
+          android:fontFamily="sans-serif-black"
+          android:text="@string/air_press_title"
+          android:textSize="30sp" />
+
+      <TextView
+          android:id="@+id/air_press_read_val"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textSize="24sp" />
+
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/humidity_row"
+        android:layout_width="match_parent"
+        android:layout_height="67dp">
+
+      <TextView
+          android:id="@+id/humidity_read_title"
+          android:layout_width="wrap_content"
+          android:layout_height="58dp"
+          android:fontFamily="sans-serif-black"
+          android:text="@string/humidity_title"
+          android:textSize="30sp" />
+
+      <TextView
+          android:id="@+id/humidity_read_val"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:textSize="24sp" />
+
+    </TableRow>
+  </TableLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
