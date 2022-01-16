@@ -30,8 +30,12 @@ DatabaseReference ref_values;
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String a_q = snapshot.child("CO2_reading").getValue().toString(); //AIR QUALITY
                 String t = snapshot.child("temperature_reading").getValue().toString(); //TEMPERATURE
+                String a_p = snapshot.child("pressure_reading").getValue().toString(); //AIR PRESSURE
+                String h = snapshot.child("humidity_reading").getValue().toString(); //HUMIDITY
                 temp.setText(" " + t + " °C");
+                air_press.setText(" " + a_p + " hPa");
                 air_quality.setText(" " + a_q + " ppm");
+                humid.setText(" " + h + " %");
             }
 
             @Override
