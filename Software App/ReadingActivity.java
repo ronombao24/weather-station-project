@@ -21,9 +21,9 @@ DatabaseReference ref_values;
         setContentView(R.layout.activity_reading);
 
         temp = (TextView)findViewById(R.id.temp_read_val);
-        //air_press = (TextView)findViewById(R.id.air_press_val);
+        air_press = (TextView)findViewById(R.id.air_press_read_val);
         air_quality = (TextView)findViewById(R.id.air_qual_read_val);
-        //humid = (TextView)findViewById(R.id.humid_val);
+        humid = (TextView)findViewById(R.id.humidity_read_val);
         ref_values = db.getInstance().getReference().child("Weather Station Reading");
         ref_values.addValueEventListener(new ValueEventListener() {
             @Override
