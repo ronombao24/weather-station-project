@@ -10,8 +10,11 @@
     <string name="reading_graph">Reading Graph</string>
     <string name="reading_text">Reading</string>
     <string name="temp_value">Temp</string>
-    <string name="air_press_value">AP</string>
+    <string name="air_press_value">hPa</string>
     <string name="hum_value">rH%</string>
     <string name="air_quality_value">AQ</string>
     <string name="atmospheric_reading_title">Atmospheric Readings</string>
+    <string name="username_login_str">Username</string>
+    <string name="password_login_str">Password</string>
+    <string name="email_login_str">Email</string>
 </resources>
