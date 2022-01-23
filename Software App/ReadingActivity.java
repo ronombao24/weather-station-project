@@ -21,21 +21,17 @@ DatabaseReference ref_values;
         setContentView(R.layout.activity_reading);
 
         temp = (TextView)findViewById(R.id.temp_read_val);
-        air_press = (TextView)findViewById(R.id.air_press_read_val);
+        //air_press = (TextView)findViewById(R.id.air_press_val);
         air_quality = (TextView)findViewById(R.id.air_qual_read_val);
-        humid = (TextView)findViewById(R.id.humidity_read_val);
+        //humid = (TextView)findViewById(R.id.humid_val);
         ref_values = db.getInstance().getReference().child("Weather Station Reading");
         ref_values.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String a_q = snapshot.child("CO2_reading").getValue().toString(); //AIR QUALITY
                 String t = snapshot.child("temperature_reading").getValue().toString(); //TEMPERATURE
-                String a_p = snapshot.child("pressure_reading").getValue().toString(); //AIR PRESSURE
-                String h = snapshot.child("humidity_reading").getValue().toString(); //HUMIDITY
                 temp.setText(" " + t + " °C");
-                air_press.setText(" " + a_p + " hPa");
                 air_quality.setText(" " + a_q + " ppm");
-                humid.setText(" " + h + " %");
             }
 
             @Override
