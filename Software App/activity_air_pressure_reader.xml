@@ -13,7 +13,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="29dp"
         android:layout_marginBottom="538dp"
-        android:text='This is the BMP280 sensor which is also called the "Barometric pressure sensor". It is a I2C sensor which is used to with one or more slaves  '
+        android:text='This is the LPS22 sensor which is also called the "Barometric pressure sensor". It is a I2C sensor which is used to with one or more slaves  '
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
