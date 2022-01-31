@@ -12,9 +12,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class ReadingActivity extends AppCompatActivity {
-TextView temp, air_press, air_quality, humid;
-FirebaseDatabase db;
-DatabaseReference ref_values;
+    TextView temp, air_press, air_quality, humid;
+    FirebaseDatabase db;
+    DatabaseReference ref_values;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,13 +29,13 @@ DatabaseReference ref_values;
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String a_q = snapshot.child("CO2_reading").getValue().toString(); //AIR QUALITY
+                String hum = snapshot.child("humidity_reading").getValue().toString(); //HUMIDITY
                 String t = snapshot.child("temperature_reading").getValue().toString(); //TEMPERATURE
                 String a_p = snapshot.child("pressure_reading").getValue().toString(); //AIR PRESSURE
-                String h = snapshot.child("humidity_reading").getValue().toString(); //HUMIDITY
                 temp.setText(" " + t + " °C");
-                air_press.setText(" " + a_p + " hPa");
                 air_quality.setText(" " + a_q + " ppm");
-                humid.setText(" " + h + " %");
+                air_press.setText(" " + a_p + " hPa");
+                humid.setText(" " + hum + " %");
             }
 
             @Override

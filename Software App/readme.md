@@ -1,1 +1,1 @@
-This is where the .java and .xml files for the Software App will go.
+This is where the .java code files and .xml layout files for the WeatherDetector Software App will go.
