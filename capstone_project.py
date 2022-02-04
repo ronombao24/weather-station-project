@@ -63,10 +63,11 @@ def led_init():
     print("Setting up GPIO17 for the LED")
     led = digitalio.DigitalInOut(board.D17)
     led.direction = digitalio.Direction.OUTPUT
+    led.value = False
     return led
 
 def get_readings():
-    enviro_readings = {"pressure": 930.000, "temperature": 21.00, "CO2": 400.00, "humidity": 15.00}
+    enviro_readings = {"pressure": 0, "temperature": 0, "CO2": 0, "humidity": 0}
     
     #DECLARE READINGS
     if not sensor_array["lps"][0]:
@@ -95,19 +96,25 @@ def print_readings(enviro_readings):
 
 def blink_led(status_array, led):
     #STATUS LED
-    for sensor_name in status_array:
-        if status_array[sensor_name][0]:
-            num_blinks = status_array[sensor_name][1]
-            break
-        else:
-            num_blinks = 1
+    inverted = False
+    
+    if all(status_array[sensor_name][0] for sensor_name in status_array):
+        num_blinks = 1
+        inverted = True
+    else:
+        for sensor_name in status_array:
+            if status_array[sensor_name][0]:
+                num_blinks = status_array[sensor_name][1]
+                break
+            else:
+                num_blinks = 1
         
     off_time = 3.0
     i = 0
     while i < num_blinks:
-        led.value = True
+        led.value = not inverted
         time.sleep(0.2)
-        led.value = False
+        led.value = inverted
         time.sleep(0.2)
         off_time -= 0.4
         i += 1
