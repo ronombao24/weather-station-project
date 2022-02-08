@@ -1,9 +1,11 @@
 #GENERIC IMPORTS
+import os
 import time
 import board
 import busio
 import digitalio
 import pyrebase
+import random
 
 #SENSOR IMPORTS
 import adafruit_lps2x
@@ -24,6 +26,19 @@ def firebase_init():
     firebase = pyrebase.initialize_app(config)
     database = firebase.database()
     return database
+
+def deviceID_init():
+    if not os.path.isdir("/home/pi/HWS"):
+        os.mkdir("/home/pi/HWS")
+    os.chdir("/home/pi/HWS")
+    if not os.path.isfile("device_ID"):
+        fp = open("device_ID", 'w')
+        device_ID = hex(random.randint(0, 4294967295))[2:].rjust(8, '0').upper()
+        print("New ID: " + device_ID)
+        fp.write(device_ID)
+        fp.close()
+    fp = open("device_ID", 'r')
+    return fp.read()
 
 def sensor_init():
     #SENSOR DECLARATIONS
@@ -67,7 +82,7 @@ def led_init():
     return led
 
 def get_readings():
-    enviro_readings = {"pressure": 0, "temperature": 0, "CO2": 0, "humidity": 0}
+    enviro_readings = {"pressure": 0, "temperature": 999, "CO2": 0, "humidity": 0}
     
     #DECLARE READINGS
     if not sensor_array["lps"][0]:
@@ -80,12 +95,13 @@ def get_readings():
         enviro_readings["humidity"] = float("{:.2f}".format(sensor_array["aht"][2].relative_humidity))
     return enviro_readings
 
-def upload_readings(db, enviro_readings):
+def upload_readings(db, enviro_readings, device_ID):
     #DATA READINGS FOR INDIVIDUAL TESTING
-    db.child("Weather Station Reading").child("pressure_reading").set(enviro_readings["pressure"])
-    db.child("Weather Station Reading").child("temperature_reading").set(enviro_readings["temperature"])
-    db.child("Weather Station Reading").child("CO2_reading").set(enviro_readings["CO2"])
-    db.child("Weather Station Reading").child("humidity_reading").set(enviro_readings["humidity"])
+    timestamp = time.strftime("%d%b%Y_%H:%M:%S", time.gmtime())
+    db.child("Weather Station Reading").child(device_ID).child(timestamp).child("pressure_reading").set(enviro_readings["pressure"])
+    db.child("Weather Station Reading").child(device_ID).child(timestamp).child("temperature_reading").set(enviro_readings["temperature"])
+    db.child("Weather Station Reading").child(device_ID).child(timestamp).child("CO2_reading").set(enviro_readings["CO2"])
+    db.child("Weather Station Reading").child(device_ID).child(timestamp).child("humidity_reading").set(enviro_readings["humidity"])
 
 def print_readings(enviro_readings):
     #PRINT
@@ -137,6 +153,7 @@ try:
     db = firebase_init()
 except:
     firebase_error(led)
+dID = deviceID_init()
 sensor_array = sensor_init()
 
 #THE MAIN FUNCTION
@@ -145,7 +162,7 @@ try:
     while True:
         enviro_readings = get_readings()
         try:
-            upload_readings(db, enviro_readings)
+            upload_readings(db, enviro_readings, dID)
         except:
             firebase_error(led)
         print_readings(enviro_readings)
