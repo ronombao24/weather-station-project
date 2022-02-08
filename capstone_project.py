@@ -97,7 +97,7 @@ def get_readings():
 
 def upload_readings(db, enviro_readings, device_ID):
     #DATA READINGS FOR INDIVIDUAL TESTING
-    timestamp = time.strftime("%d%b%Y_%H:%M:%S", time.gmtime())
+    timestamp = time.strftime("%d%b%Y_%H:%M:%S", time.localtime())
     db.child("Weather Station Reading").child(device_ID).child(timestamp).child("pressure_reading").set(enviro_readings["pressure"])
     db.child("Weather Station Reading").child(device_ID).child(timestamp).child("temperature_reading").set(enviro_readings["temperature"])
     db.child("Weather Station Reading").child(device_ID).child(timestamp).child("CO2_reading").set(enviro_readings["CO2"])
