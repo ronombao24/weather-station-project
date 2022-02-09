@@ -13,15 +13,13 @@ import adafruit_bmp280
 import adafruit_sgp30
 import adafruit_ahtx0
 
-def extract_IDs(pyrebase_item):
-    return pyrebase_item.key()
-
 def firebase_init():
     #FIREBASE CONFIG
     config = {
         "apiKey" : "iF4wAXdjSQGAJiu11cqAlIkd3vHs95I0Psa6fw0w",
         "authDomain": "ceng317weatherstationproject.firebaseapp.com",
-        "databaseURL" : "https://ceng317weatherstationproject-default-rtdb.firebaseio.com/",
+        "databaseURL" : "https://ceng317weatherstationproject"\
+            "-default-rtdb.firebaseio.com/",
         "storageBucket" : "ceng317weatherstationproject.appspot.com"
     }
 
@@ -31,36 +29,58 @@ def firebase_init():
     return database
 
 def deviceID_init(db):
+    # Check if directory exists, create if not
     if not os.path.isdir("/home/pi/HWS"):
         os.mkdir("/home/pi/HWS")
     os.chdir("/home/pi/HWS")
+    
+    # Check if device_ID file exists, and if it contains anything
     if not os.path.isfile("device_ID") or os.stat("device_ID").st_size == 0:
         print("No ID found")
         
+        # Get a list of all current IDs on the database
         ID_db = db.child("Weather Station Reading").get()
-        ID_list = list(map(extract_IDs, ID_db.each()))
+        ID_list = list(map(lambda n: n.key(), ID_db.each()))
         
         fp = open("device_ID", 'w')
-        
         print("Generating new ID")
-        device_ID = hex(random.randint(0, 4294967295))[2:].rjust(8, '0').upper()
         
+        # Generate an ID. IDs are 8 hex digits long
+        device_ID = hex(random.randint(0, 4294967295))[2:]\
+                    .rjust(8, '0').upper()
+        
+        # Check if new ID matches any IDs already in the database
+        # Continue generating until a unique ID is found
         while device_ID in ID_list:
             print("Duplicate ID: " + device_ID)
             print("Generating new ID")
-            device_ID = hex(random.randint(0, 4294967295))[2:].rjust(8, '0').upper()
+            device_ID = hex(random.randint(0, 4294967295))[2:]\
+                        .rjust(8, '0').upper()
         
         print("New ID: " + device_ID)
         fp.write(device_ID)
         fp.close()
+        
+    # Read and return the device_ID
     fp = open("device_ID", 'r')
     return fp.read()
 
 def sensor_init():
-    #SENSOR DECLARATIONS
-    sensor_array = {"lps": [False, 2], "bmp": [False, 3], "sgp": [False, 4], "aht": [False, 5]}
-
+    # Create a dict of the sensors
+    # First element of the array is whether the sensor is unresponsive
+    # Second element has to do with the LED error codes
+    # Third element will be the sensor object, appended to the end
+    sensor_array = {
+        "lps": [False, 2],
+        "bmp": [False, 3],
+        "sgp": [False, 4],
+        "aht": [False, 5]
+    }
+    
+    # Setup I2C bus
     i2c = busio.I2C(board.SCL, board.SDA)
+    
+    # Try creating sensor objects. Flip the boolean if it fails
     try:
         lps22 = adafruit_lps2x.LPS22(i2c)
         sensor_array["lps"].append(lps22)
@@ -85,68 +105,109 @@ def sensor_init():
     except:
         print("AHT20 missing or damaged")
         sensor_array["aht"][0] = True
-
-    print("I2C addresses found:",[hex(device_address) for device_address in i2c.scan()],)
+    
+    # Print the hex addresses of any I2C devices
+    # This is mostly for debugging
+    print("I2C addresses found:",
+          [hex(device_address) for device_address in i2c.scan()])
     return sensor_array
 
 def led_init():
-    #LED CIRCUIT SETUP
+    # Initialize the status LED
     print("Setting up GPIO17 for the LED")
     led = digitalio.DigitalInOut(board.D17)
     led.direction = digitalio.Direction.OUTPUT
+    
+    # Turn it off in case it was left on
     led.value = False
     return led
 
-def get_readings():
-    enviro_readings = {"pressure": 0, "temperature": 999, "CO2": 0, "humidity": 0}
+def get_readings(sensor_array):
+    # Create a dict to hold the readings
+    # Default values are there in case a sensor is missing
+    enviro_readings = {
+        "pressure": 0,
+        "temperature": 999,
+        "CO2": 0,
+        "humidity": 0
+    }
     
-    #DECLARE READINGS
+    # Get the readings from the sensors
+    # Leave the default value if they're missing
     if not sensor_array["lps"][0]:
-        enviro_readings["pressure"] = float("{:.3f}".format(sensor_array["lps"][2].pressure))
+        enviro_readings["pressure"] = float("{:.3f}".format(
+            sensor_array["lps"][2].pressure))
     if not sensor_array["bmp"][0]:
-        enviro_readings["temperature"] = float("{:.2f}".format(sensor_array["bmp"][2].temperature))
+        enviro_readings["temperature"] = float("{:.2f}".format(
+            sensor_array["bmp"][2].temperature))
     if not sensor_array["sgp"][0]:
-        enviro_readings["CO2"] = float("{:.2f}".format(sensor_array["sgp"][2].eCO2))
+        enviro_readings["CO2"] = float("{:.2f}".format(
+            sensor_array["sgp"][2].eCO2))
     if not sensor_array["aht"][0]:
-        enviro_readings["humidity"] = float("{:.2f}".format(sensor_array["aht"][2].relative_humidity))
+        enviro_readings["humidity"] = float("{:.2f}".format(
+            sensor_array["aht"][2].relative_humidity))
+    
     return enviro_readings
 
 def upload_readings(db, enviro_readings, device_ID):
-    #CURRENT READINGS
-    db.child("Weather Station Reading").child(device_ID).child("current_readings").child("current_pressure").set(enviro_readings["pressure"])
-    db.child("Weather Station Reading").child(device_ID).child("current_readings").child("current_temperature").set(enviro_readings["temperature"])
-    db.child("Weather Station Reading").child(device_ID).child("current_readings").child("current_CO2").set(enviro_readings["CO2"])
-    db.child("Weather Station Reading").child(device_ID).child("current_readings").child("current_humidity").set(enviro_readings["humidity"])
+    # Upload current readings under the device ID
+    # These will be overwritten each time
+    db.child("Weather Station Reading").child(device_ID)\
+      .child("current_readings").child("current_pressure")\
+      .set(enviro_readings["pressure"])
+    db.child("Weather Station Reading").child(device_ID)\
+      .child("current_readings").child("current_temperature")\
+      .set(enviro_readings["temperature"])
+    db.child("Weather Station Reading").child(device_ID)\
+      .child("current_readings").child("current_CO2")\
+      .set(enviro_readings["CO2"])
+    db.child("Weather Station Reading").child(device_ID)\
+      .child("current_readings").child("current_humidity")\
+      .set(enviro_readings["humidity"])
     
-    #HISTORICAL READINGS
+    # Generate a string from the current time
     timestamp = time.strftime("%d%b%Y_%H:%M:%S", time.localtime())
-    db.child("Weather Station Reading").child(device_ID).child("historical_readings").child(timestamp).child("pressure_reading").set(enviro_readings["pressure"])
-    db.child("Weather Station Reading").child(device_ID).child("historical_readings").child(timestamp).child("temperature_reading").set(enviro_readings["temperature"])
-    db.child("Weather Station Reading").child(device_ID).child("historical_readings").child(timestamp).child("CO2_reading").set(enviro_readings["CO2"])
-    db.child("Weather Station Reading").child(device_ID).child("historical_readings").child(timestamp).child("humidity_reading").set(enviro_readings["humidity"])
+    
+    # Upload readings under the device ID, using the timestamp as a key
+    db.child("Weather Station Reading").child(device_ID)\
+      .child("historical_readings").child(timestamp)\
+      .child("pressure_reading").set(enviro_readings["pressure"])
+    db.child("Weather Station Reading").child(device_ID)\
+      .child("historical_readings").child(timestamp)\
+      .child("temperature_reading").set(enviro_readings["temperature"])
+    db.child("Weather Station Reading").child(device_ID)\
+      .child("historical_readings").child(timestamp)\
+      .child("CO2_reading").set(enviro_readings["CO2"])
+    db.child("Weather Station Reading").child(device_ID)\
+      .child("historical_readings").child(timestamp)\
+      .child("humidity_reading").set(enviro_readings["humidity"])
 
 def print_readings(enviro_readings):
-    #PRINT
+    # Print the readings to the console, mostly for debugging purposes
     print("Atmospheric Pressure: {} hPa". format(enviro_readings["pressure"]))
     print("Temperature: {} C". format(enviro_readings["temperature"]))
     print("CO2 (Air Quality) Value: {} ppm". format(enviro_readings["CO2"]))
     print("Humidity: {} %rH". format(enviro_readings["humidity"]))
 
 def blink_led(status_array, led):
-    #STATUS LED
     inverted = False
     
+    # Invert the LED pattern if all sensors are missing
     if all(status_array[sensor_name][0] for sensor_name in status_array):
         num_blinks = 1
         inverted = True
     else:
+        # Change the number of blinks if a sensor is missing
+        # The number associated with each sensor is defined in sensor_array
+        # In normal operation blink once
         for sensor_name in status_array:
             if status_array[sensor_name][0]:
                 num_blinks = status_array[sensor_name][1]
                 break
             else:
                 num_blinks = 1
-        
+    
+    # Each blink cycle should add up to 3 seconds
     off_time = 3.0
     i = 0
     while i < num_blinks:
@@ -154,11 +215,13 @@ def blink_led(status_array, led):
         time.sleep(0.2)
         led.value = inverted
         time.sleep(0.2)
-        off_time -= 0.4
+        off_time -= 0.4  # Reduce the remaining time to keep it consistent
         i += 1
     time.sleep(off_time)
 
 def firebase_error(led):
+    # I couldn't pin down a specific exception to catch, so this
+    # runs if anything goes wrong in the functions dealing with firebase
     print("Error connecting to firebase")
     while True:
         led.value = True
@@ -170,6 +233,7 @@ def firebase_error(led):
         led.value = False
         time.sleep(0.6)
 
+# Initializing everything
 led = led_init()
 try:
     db = firebase_init()
@@ -178,11 +242,11 @@ except:
 dID = deviceID_init(db)
 sensor_array = sensor_init()
 
-#THE MAIN FUNCTION
+# Main loop
 try:
     print("Initiating Readings...")
     while True:
-        enviro_readings = get_readings()
+        enviro_readings = get_readings(sensor_array)
         try:
             upload_readings(db, enviro_readings, dID)
         except:
@@ -192,10 +256,12 @@ try:
         blink_led(sensor_array, led)
 
 except KeyboardInterrupt:
-    print("\nProgram is shut off by CTRL+C command. Cleaning all GPIO connections.\n")
+    print("\nProgram is shut off by CTRL+C command."
+          "Cleaning all GPIO connections.\n")
     led.value = False
     
 except:
+    # For exceptions without specific handling
     print("\nUnknown Error")
     while True:
         led.value = True
