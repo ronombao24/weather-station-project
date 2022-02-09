@@ -96,12 +96,18 @@ def get_readings():
     return enviro_readings
 
 def upload_readings(db, enviro_readings, device_ID):
-    #DATA READINGS FOR INDIVIDUAL TESTING
+    #CURRENT READINGS
+    db.child("Weather Station Reading").child(device_ID).child("current_readings").child("current_pressure").set(enviro_readings["pressure"])
+    db.child("Weather Station Reading").child(device_ID).child("current_readings").child("current_temperature").set(enviro_readings["temperature"])
+    db.child("Weather Station Reading").child(device_ID).child("current_readings").child("current_CO2").set(enviro_readings["CO2"])
+    db.child("Weather Station Reading").child(device_ID).child("current_readings").child("current_humidity").set(enviro_readings["humidity"])
+    
+    #HISTORICAL READINGS
     timestamp = time.strftime("%d%b%Y_%H:%M:%S", time.localtime())
-    db.child("Weather Station Reading").child(device_ID).child(timestamp).child("pressure_reading").set(enviro_readings["pressure"])
-    db.child("Weather Station Reading").child(device_ID).child(timestamp).child("temperature_reading").set(enviro_readings["temperature"])
-    db.child("Weather Station Reading").child(device_ID).child(timestamp).child("CO2_reading").set(enviro_readings["CO2"])
-    db.child("Weather Station Reading").child(device_ID).child(timestamp).child("humidity_reading").set(enviro_readings["humidity"])
+    db.child("Weather Station Reading").child(device_ID).child("historical_readings").child(timestamp).child("pressure_reading").set(enviro_readings["pressure"])
+    db.child("Weather Station Reading").child(device_ID).child("historical_readings").child(timestamp).child("temperature_reading").set(enviro_readings["temperature"])
+    db.child("Weather Station Reading").child(device_ID).child("historical_readings").child(timestamp).child("CO2_reading").set(enviro_readings["CO2"])
+    db.child("Weather Station Reading").child(device_ID).child("historical_readings").child(timestamp).child("humidity_reading").set(enviro_readings["humidity"])
 
 def print_readings(enviro_readings):
     #PRINT
