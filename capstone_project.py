@@ -13,6 +13,9 @@ import adafruit_bmp280
 import adafruit_sgp30
 import adafruit_ahtx0
 
+def extract_IDs(pyrebase_item):
+    return pyrebase_item.key()
+
 def firebase_init():
     #FIREBASE CONFIG
     config = {
@@ -27,13 +30,26 @@ def firebase_init():
     database = firebase.database()
     return database
 
-def deviceID_init():
+def deviceID_init(db):
     if not os.path.isdir("/home/pi/HWS"):
         os.mkdir("/home/pi/HWS")
     os.chdir("/home/pi/HWS")
-    if not os.path.isfile("device_ID"):
+    if not os.path.isfile("device_ID") or os.stat("device_ID").st_size == 0:
+        print("No ID found")
+        
+        ID_db = db.child("Weather Station Reading").get()
+        ID_list = list(map(extract_IDs, ID_db.each()))
+        
         fp = open("device_ID", 'w')
+        
+        print("Generating new ID")
         device_ID = hex(random.randint(0, 4294967295))[2:].rjust(8, '0').upper()
+        
+        while device_ID in ID_list:
+            print("Duplicate ID: " + device_ID)
+            print("Generating new ID")
+            device_ID = hex(random.randint(0, 4294967295))[2:].rjust(8, '0').upper()
+        
         print("New ID: " + device_ID)
         fp.write(device_ID)
         fp.close()
@@ -159,7 +175,7 @@ try:
     db = firebase_init()
 except:
     firebase_error(led)
-dID = deviceID_init()
+dID = deviceID_init(db)
 sensor_array = sensor_init()
 
 #THE MAIN FUNCTION
