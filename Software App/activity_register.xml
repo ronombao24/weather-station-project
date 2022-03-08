@@ -6,12 +6,12 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    tools:context=".LoginActivity">
+    tools:context=".RegisterActivity">
 
     <EditText
         android:id="@+id/email"
-        android:layout_width="390dp"
-        android:layout_height="72dp"
+        android:layout_width="393dp"
+        android:layout_height="69dp"
         android:layout_marginLeft="4pt"
         android:layout_marginTop="10pt"
         android:layout_marginRight="4pt"
@@ -19,28 +19,19 @@
 
     <EditText
         android:id="@+id/password"
-        android:layout_width="392dp"
-        android:layout_height="85dp"
+        android:layout_width="395dp"
+        android:layout_height="76dp"
         android:layout_marginLeft="4pt"
         android:layout_marginTop="10pt"
         android:layout_marginRight="4pt"
         android:hint="Password" />
+
     <Button
-        android:id="@+id/login_button"
+        android:id="@+id/register_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="4pt"
         android:layout_marginLeft="4pt"
         android:layout_marginTop="10pt"
-        android:text="LOG IN"/>
-    <Button
-        android:id="@+id/signup_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_marginRight="4pt"
-        android:layout_marginLeft="4pt"
-        android:layout_marginTop="10pt"
-        android:text="SIGN UP"/>
-
-
+        android:text="REGISTER" />
 </LinearLayout>
