@@ -13,10 +13,13 @@ import adafruit_bmp280
 import adafruit_sgp30
 import adafruit_ahtx0
 
+ADMIN_EMAIL = "n01286513@humbermail.ca"
+ADMIN_PASS = "HardWare123"
+
 def firebase_init():
     #FIREBASE CONFIG
     config = {
-        "apiKey" : "iF4wAXdjSQGAJiu11cqAlIkd3vHs95I0Psa6fw0w",
+        "apiKey" : "AIzaSyD5tCiAtyHr0BFozu4ckYbJEIZrFMeJaaQ ",
         "authDomain": "ceng317weatherstationproject.firebaseapp.com",
         "databaseURL" : "https://ceng317weatherstationproject"\
             "-default-rtdb.firebaseio.com/",
@@ -25,10 +28,19 @@ def firebase_init():
 
     #DECLARE FIREBASE OBJECT
     firebase = pyrebase.initialize_app(config)
+    return firebase
+    
+def db_init(firebase):
     database = firebase.database()
     return database
 
-def deviceID_init(db):
+def admin_init(firebase):
+    auth = firebase.auth()
+    admin = auth.sign_in_with_email_and_password(ADMIN_EMAIL, ADMIN_PASS)
+    print("Logged in administrator account")
+    return admin
+
+def deviceID_init(db, admin):
     # Check if directory exists, create if not
     if not os.path.isdir("/home/pi/HWS"):
         os.mkdir("/home/pi/HWS")
@@ -38,9 +50,13 @@ def deviceID_init(db):
     if not os.path.isfile("device_ID") or os.stat("device_ID").st_size == 0:
         print("No ID found")
         
+        first_ID = True
+        
         # Get a list of all current IDs on the database
-        ID_db = db.child("Weather Station Reading").get()
-        ID_list = list(map(lambda n: n.key(), ID_db.each()))
+        ID_db = db.child("Weather Station Reading").get(admin['idToken'])
+        if ID_db.each() is not None:
+            ID_list = list(map(lambda n: n.key(), ID_db.each()))
+            first_ID = False
         
         fp = open("device_ID", 'w')
         print("Generating new ID")
@@ -51,11 +67,12 @@ def deviceID_init(db):
         
         # Check if new ID matches any IDs already in the database
         # Continue generating until a unique ID is found
-        while device_ID in ID_list:
-            print("Duplicate ID: " + device_ID)
-            print("Generating new ID")
-            device_ID = hex(random.randint(0, 4294967295))[2:]\
-                        .rjust(8, '0').upper()
+        if not first_ID:
+            while device_ID in ID_list:
+                print("Duplicate ID: " + device_ID)
+                print("Generating new ID")
+                device_ID = hex(random.randint(0, 4294967295))[2:]\
+                            .rjust(8, '0').upper()
         
         print("New ID: " + device_ID)
         fp.write(device_ID)
@@ -149,38 +166,34 @@ def get_readings(sensor_array):
     
     return enviro_readings
 
-def upload_readings(db, enviro_readings, device_ID):
+def upload_readings(db, enviro_readings, device_ID, admin):
     # Upload current readings under the device ID
     # These will be overwritten each time
     db.child("Weather Station Reading").child(device_ID)\
       .child("current_readings").child("current_pressure")\
-      .set(enviro_readings["pressure"])
+      .set(enviro_readings["pressure"], admin['idToken'])
     db.child("Weather Station Reading").child(device_ID)\
       .child("current_readings").child("current_temperature")\
-      .set(enviro_readings["temperature"])
+      .set(enviro_readings["temperature"], admin['idToken'])
     db.child("Weather Station Reading").child(device_ID)\
       .child("current_readings").child("current_CO2")\
-      .set(enviro_readings["CO2"])
+      .set(enviro_readings["CO2"], admin['idToken'])
     db.child("Weather Station Reading").child(device_ID)\
       .child("current_readings").child("current_humidity")\
-      .set(enviro_readings["humidity"])
+      .set(enviro_readings["humidity"], admin['idToken'])
     
     # Generate a string from the current time
     timestamp = time.strftime("%d%b%Y_%H:%M:%S", time.localtime())
     
+    data = {"timestamp": timestamp,
+            "pressure_reading": enviro_readings["pressure"],
+            "temperature_reading": enviro_readings["temperature"],
+            "CO2_reading": enviro_readings["CO2"],
+            "humidity_reading": enviro_readings["humidity"]}
+    
     # Upload readings under the device ID, using the timestamp as a key
     db.child("Weather Station Reading").child(device_ID)\
-      .child("historical_readings").child(timestamp)\
-      .child("pressure_reading").set(enviro_readings["pressure"])
-    db.child("Weather Station Reading").child(device_ID)\
-      .child("historical_readings").child(timestamp)\
-      .child("temperature_reading").set(enviro_readings["temperature"])
-    db.child("Weather Station Reading").child(device_ID)\
-      .child("historical_readings").child(timestamp)\
-      .child("CO2_reading").set(enviro_readings["CO2"])
-    db.child("Weather Station Reading").child(device_ID)\
-      .child("historical_readings").child(timestamp)\
-      .child("humidity_reading").set(enviro_readings["humidity"])
+      .child("historical_readings").push(data, admin['idToken'])
 
 def print_readings(enviro_readings):
     # Print the readings to the console, mostly for debugging purposes
@@ -236,10 +249,12 @@ def firebase_error(led):
 # Initializing everything
 led = led_init()
 try:
-    db = firebase_init()
+    firebase = firebase_init()
+    db = db_init(firebase)
+    admin = admin_init(firebase)
 except:
     firebase_error(led)
-dID = deviceID_init(db)
+dID = deviceID_init(db, admin)
 sensor_array = sensor_init()
 
 # Main loop
@@ -248,7 +263,7 @@ try:
     while True:
         enviro_readings = get_readings(sensor_array)
         try:
-            upload_readings(db, enviro_readings, dID)
+            upload_readings(db, enviro_readings, dID, admin)
         except:
             firebase_error(led)
         print_readings(enviro_readings)
